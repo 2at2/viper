@@ -88,7 +88,7 @@ func insensitiviseMap(m map[string]interface{}) {
 	}
 }
 
-func toSearchableMap(source map[string]interface{}) {
+func toSearchableMap(source map[string]interface{}) map[string]interface{} {
 	nestedMap := make(map[string]interface{})
 	for k, v := range source {
 		if !strings.Contains(k, ".") {
@@ -120,7 +120,7 @@ func toSearchableMap(source map[string]interface{}) {
 		}
 	}
 
-	source = nestedMap
+	return nestedMap
 }
 
 func absPathify(inPath string) string {
