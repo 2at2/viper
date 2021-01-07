@@ -30,6 +30,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -49,6 +50,8 @@ import (
 	"gopkg.in/ini.v1"
 	"gopkg.in/yaml.v2"
 )
+
+var placeholderConfigPattern = regexp.MustCompile("\\${[^}]*}")
 
 // ConfigMarshalError happens when failing to marshal the configuration.
 type ConfigMarshalError struct {
@@ -863,6 +866,28 @@ func GetString(key string) string { return v.GetString(key) }
 
 func (v *Viper) GetString(key string) string {
 	return cast.ToString(v.Get(key))
+}
+
+func (v *Viper) replacePlaceholders(value string) string {
+	return placeholderConfigPattern.ReplaceAllStringFunc(
+		value,
+		func(s string) string {
+			k := s[2 : len(s)-1]
+			v := v.Get(k)
+
+			var r string
+			switch v := v.(type) {
+			case int:
+				r = fmt.Sprintf("%d", v)
+			case float64:
+				r = fmt.Sprintf("%f", v)
+			default:
+				r = fmt.Sprintf("%s", v)
+			}
+
+			return r
+		},
+	)
 }
 
 // GetBool returns the value associated with the key as a boolean.
