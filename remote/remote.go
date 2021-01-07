@@ -87,6 +87,8 @@ func getConfigManager(rp viper.RemoteProvider) (crypt.ConfigManager, error) {
 			cm, err = crypt.NewEtcdConfigManager([]string{rp.Endpoint()}, kr)
 		case "firestore":
 			cm, err = crypt.NewFirestoreConfigManager([]string{rp.Endpoint()}, kr)
+		case "vault":
+			cm, err = NewVaultConfigManager([]string{rp.Endpoint()}, kr)
 		default:
 			cm, err = crypt.NewConsulConfigManager([]string{rp.Endpoint()}, kr)
 		}
@@ -96,6 +98,8 @@ func getConfigManager(rp viper.RemoteProvider) (crypt.ConfigManager, error) {
 			cm, err = crypt.NewStandardEtcdConfigManager([]string{rp.Endpoint()})
 		case "firestore":
 			cm, err = crypt.NewStandardFirestoreConfigManager([]string{rp.Endpoint()})
+		case "vault":
+			cm, err = NewStandardVaultConfigManager([]string{rp.Endpoint()})
 		default:
 			cm, err = crypt.NewStandardConsulConfigManager([]string{rp.Endpoint()})
 		}
