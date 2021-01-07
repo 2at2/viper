@@ -1894,7 +1894,7 @@ func (v *Viper) getKeyValueConfig() error {
 
 		return nil
 	}
-	return RemoteConfigError("No Files Found")
+	return RemoteConfigError("No Files Found or remote error")
 }
 
 func (v *Viper) getRemoteConfig(provider RemoteProvider) (map[string]interface{}, error) {
@@ -1902,6 +1902,7 @@ func (v *Viper) getRemoteConfig(provider RemoteProvider) (map[string]interface{}
 	if err != nil {
 		return nil, err
 	}
+
 	err = v.unmarshalReader(reader, v.kvstore)
 	return v.kvstore, err
 }
@@ -1920,7 +1921,7 @@ func (v *Viper) watchKeyValueConfigOnChannel() error {
 		}(respc)
 		return nil
 	}
-	return RemoteConfigError("No Files Found")
+	return RemoteConfigError("No Files Found or remote error")
 }
 
 // Retrieve the first found remote configuration.
@@ -1933,7 +1934,7 @@ func (v *Viper) watchKeyValueConfig() error {
 		v.kvstore = val
 		return nil
 	}
-	return RemoteConfigError("No Files Found")
+	return RemoteConfigError("No Files Found or remote error")
 }
 
 func (v *Viper) watchRemoteConfig(provider RemoteProvider) (map[string]interface{}, error) {
