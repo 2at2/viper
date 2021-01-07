@@ -1683,7 +1683,7 @@ func (v *Viper) unmarshalReader(in io.Reader, c map[string]interface{}) error {
 	}
 
 	insensitiviseMap(c)
-	c = toSearchableMap(c)
+	toSearchableMap(c)
 
 	return nil
 }
