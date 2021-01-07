@@ -88,6 +88,41 @@ func insensitiviseMap(m map[string]interface{}) {
 	}
 }
 
+func toSearchableMap(source map[string]interface{}) {
+	nestedMap := make(map[string]interface{})
+	for k, v := range source {
+		if !strings.Contains(k, ".") {
+			nestedMap[k] = v
+		} else {
+			parts := strings.Split(k, ".")
+			l := len(parts)
+
+			referencedMap := nestedMap
+			for i, p := range parts {
+				last := l == i+1
+
+				if _, ok := referencedMap[p]; ok {
+					if last {
+						referencedMap[p] = v
+					} else {
+						referencedMap = referencedMap[p].(map[string]interface{})
+					}
+				} else {
+					if last {
+						referencedMap[p] = v
+					} else {
+						referencedMap[p] = make(map[string]interface{})
+						nestedMap = referencedMap
+						referencedMap = referencedMap[p].(map[string]interface{})
+					}
+				}
+			}
+		}
+	}
+
+	source = nestedMap
+}
+
 func absPathify(inPath string) string {
 	jww.INFO.Println("Trying to resolve absolute path to", inPath)
 

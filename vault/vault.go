@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/bketelsen/crypt/backend"
@@ -157,7 +156,7 @@ func (c *Client) Get(key string) ([]byte, error) {
 		return []byte{}, fmt.Errorf("Key ( %s ) was not found.", key)
 	}
 
-	bts, err := json.Marshal(toSearchableMap(data.Data))
+	bts, err := json.Marshal(data.Data)
 	if err != nil {
 		log.Printf("Unable to marshal vault secret data - %s", err)
 		return nil, err
@@ -195,7 +194,7 @@ func (c *Client) Watch(key string, stop chan bool) <-chan *backend.Response {
 				continue
 			}
 
-			bts, err := json.Marshal(toSearchableMap(data.Data))
+			bts, err := json.Marshal(data.Data)
 			if err != nil {
 				log.Printf("Unable to marshal vault secret data - %s", err)
 				respChan <- &backend.Response{Value: nil, Error: err}
@@ -205,39 +204,4 @@ func (c *Client) Watch(key string, stop chan bool) <-chan *backend.Response {
 		}
 	}()
 	return respChan
-}
-
-func toSearchableMap(source map[string]interface{}) map[string]interface{} {
-	nestedMap := make(map[string]interface{})
-	for k, v := range source {
-		if !strings.Contains(k, ".") {
-			nestedMap[k] = v
-		} else {
-			parts := strings.Split(k, ".")
-			l := len(parts)
-
-			referencedMap := nestedMap
-			for i, p := range parts {
-				last := l == i+1
-
-				if _, ok := referencedMap[p]; ok {
-					if last {
-						referencedMap[p] = v
-					} else {
-						referencedMap = referencedMap[p].(map[string]interface{})
-					}
-				} else {
-					if last {
-						referencedMap[p] = v
-					} else {
-						referencedMap[p] = make(map[string]interface{})
-						nestedMap = referencedMap
-						referencedMap = referencedMap[p].(map[string]interface{})
-					}
-				}
-			}
-		}
-	}
-
-	return nestedMap
 }
