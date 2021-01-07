@@ -19,7 +19,9 @@ package vault
  */
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -154,8 +156,13 @@ func (c *Client) Get(key string) ([]byte, error) {
 		return []byte{}, fmt.Errorf("Key ( %s ) was not found.", key)
 	}
 
-	v := data.Data["value"].(string)
-	return []byte(v), nil
+	bts, err := json.Marshal(data.Data)
+	if err != nil {
+		log.Printf("Unable to marshal vault secret data - %s", err)
+		return nil, err
+	}
+
+	return bts, nil
 }
 
 func (c *Client) List(key string) (backend.KVPairs, error) {
@@ -187,7 +194,13 @@ func (c *Client) Watch(key string, stop chan bool) <-chan *backend.Response {
 				continue
 			}
 
-			respChan <- &backend.Response{Value: data.Data["value"].([]byte), Error: nil}
+			bts, err := json.Marshal(data.Data)
+			if err != nil {
+				log.Printf("Unable to marshal vault secret data - %s", err)
+				respChan <- &backend.Response{Value: nil, Error: err}
+			} else {
+				respChan <- &backend.Response{Value: bts}
+			}
 		}
 	}()
 	return respChan
