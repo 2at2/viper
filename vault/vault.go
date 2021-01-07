@@ -149,7 +149,7 @@ func (c *Client) Get(key string) ([]byte, error) {
 	 */
 	data, err := c.client.Logical().Read(key)
 	if err != nil {
-		fmt.Println("Error during Vault Get -", err)
+		log.Printf("Error during Vault Get - %s", err)
 		return []byte{}, err
 	}
 	if data.Data == nil {
