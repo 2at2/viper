@@ -152,8 +152,12 @@ func (c *Client) Get(key string) ([]byte, error) {
 		log.Printf("Error during Vault Get - %s", err)
 		return []byte{}, err
 	}
+
+	if data == nil {
+		return nil, fmt.Errorf("source not found: %s", key)
+	}
 	if data.Data == nil {
-		return []byte{}, fmt.Errorf("Key ( %s ) was not found.", key)
+		return []byte{}, fmt.Errorf("key %s was not found", key)
 	}
 
 	bts, err := json.Marshal(data.Data)
