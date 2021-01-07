@@ -865,7 +865,7 @@ func (v *Viper) Sub(key string) *Viper {
 func GetString(key string) string { return v.GetString(key) }
 
 func (v *Viper) GetString(key string) string {
-	return cast.ToString(v.Get(key))
+	return v.replacePlaceholders(cast.ToString(v.Get(key)))
 }
 
 func (v *Viper) replacePlaceholders(value string) string {
