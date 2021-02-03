@@ -11,6 +11,8 @@
 package viper
 
 import (
+	"fmt"
+	"github.com/smartystreets/assertions"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -91,5 +93,36 @@ func TestAbsPathify(t *testing.T) {
 		if got != test.output {
 			t.Errorf("Got %v\nexpected\n%q", got, test.output)
 		}
+	}
+}
+
+func TestToSearchableMap(t *testing.T) {
+	data := make(map[string]interface{})
+	data["kafka.topic.name"] = "topic-name"
+	data["kafka.topic.partitions"] = 10
+
+	toSearchableMap(data)
+
+	assertions.ShouldEqual(data, map[string]interface{}{
+		"kafka": map[string]interface{}{
+			"topic": map[string]interface{}{
+				"name":       "topic-name",
+				"partitions": 10,
+			},
+		},
+	})
+
+	eq := reflect.DeepEqual(data, map[string]interface{}{
+		"kafka": map[string]interface{}{
+			"topic": map[string]interface{}{
+				"name":       "topic-name",
+				"partitions": 10,
+			},
+		},
+	})
+
+	if !eq {
+		fmt.Printf("%+v\n", data)
+		t.Fail()
 	}
 }

@@ -299,6 +299,7 @@ type defaultRemoteProvider struct {
 	endpoint      string
 	path          string
 	secretKeyring string
+	strict        bool
 }
 
 func (rp defaultRemoteProvider) Provider() string {
@@ -496,11 +497,11 @@ func (v *Viper) AddConfigPath(in string) {
 // must be set to allow Vault to work, VAULT_ROLE_ID and VAULT_SECRET_ID.
 //
 
-func AddRemoteProvider(provider, endpoint, path string) error {
-	return v.AddRemoteProvider(provider, endpoint, path)
+func AddRemoteProvider(provider, endpoint, path string, strict bool) error {
+	return v.AddRemoteProvider(provider, endpoint, path, strict)
 }
 
-func (v *Viper) AddRemoteProvider(provider, endpoint, path string) error {
+func (v *Viper) AddRemoteProvider(provider, endpoint, path string, strict bool) error {
 	if !stringInSlice(provider, SupportedRemoteProviders) {
 		return UnsupportedRemoteProviderError(provider)
 	}
@@ -510,6 +511,7 @@ func (v *Viper) AddRemoteProvider(provider, endpoint, path string) error {
 			endpoint: endpoint,
 			provider: provider,
 			path:     path,
+			strict:   strict,
 		}
 		if !v.providerPathExists(rp) {
 			v.remoteProviders = append(v.remoteProviders, rp)
@@ -1913,25 +1915,28 @@ func (v *Viper) getKeyValueConfig() error {
 		val, err := v.getRemoteConfig(rp)
 		if err != nil {
 			log.Printf("get remote config: %s", err)
-
-			continue
+			if strings.Contains("source not found", err.Error()) && rp.strict {
+				return fmt.Errorf("unable to load configs for %s - %s", rp.provider, err)
+			}
 		}
 
-		v.kvstore = val
-
-		return nil
+		mergeMaps(val, v.kvstore, nil)
 	}
-	return RemoteConfigError("No Files Found or remote error")
+
+	return nil
 }
 
 func (v *Viper) getRemoteConfig(provider RemoteProvider) (map[string]interface{}, error) {
+	data := make(map[string]interface{})
+
 	reader, err := RemoteConfig.Get(provider)
 	if err != nil {
 		return nil, err
 	}
 
-	err = v.unmarshalReader(reader, v.kvstore)
-	return v.kvstore, err
+	err = v.unmarshalReader(reader, data)
+
+	return data, err
 }
 
 // Retrieve the first found remote configuration.

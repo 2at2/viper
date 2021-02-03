@@ -100,6 +100,8 @@ func getConfigManager(rp viper.RemoteProvider) (crypt.ConfigManager, error) {
 			cm, err = crypt.NewStandardFirestoreConfigManager([]string{rp.Endpoint()})
 		case "vault":
 			cm, err = NewStandardVaultConfigManager([]string{rp.Endpoint()})
+		case "consul":
+			cm, err = NewStandardConsulConfigManager([]string{rp.Endpoint()})
 		default:
 			cm, err = crypt.NewStandardConsulConfigManager([]string{rp.Endpoint()})
 		}

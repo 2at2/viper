@@ -1,14 +1,8 @@
 package remote
 
-// jna -- This stub will connect our vault provider with the
-// crypt.ConfigManager interface. The main code is in vault/vault.go
-//
-// Until I can get the maintainers of the crypt package to support
-// vault, we can make vault work this way.
-
 import (
 	crypt "github.com/bketelsen/crypt/config"
-	vault "github.com/spf13/viper/vault"
+	vault "github.com/spf13/viper/provider/vault"
 	"io"
 )
 

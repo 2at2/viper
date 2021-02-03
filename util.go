@@ -97,23 +97,24 @@ func toSearchableMap(source map[string]interface{}) {
 			parts := strings.Split(k, ".")
 			l := len(parts)
 
-			referencedMap := searchableMap
 			for i, p := range parts {
 				last := l == i+1
+
+				referencedMap := searchableMap
+
+				for y := 0; y != i; y++ {
+					referencedMap = referencedMap[parts[y]].(map[string]interface{})
+				}
 
 				if _, ok := referencedMap[p]; ok {
 					if last {
 						referencedMap[p] = v
-					} else {
-						referencedMap = referencedMap[p].(map[string]interface{})
 					}
 				} else {
 					if last {
 						referencedMap[p] = v
 					} else {
 						referencedMap[p] = make(map[string]interface{})
-						searchableMap = referencedMap
-						referencedMap = referencedMap[p].(map[string]interface{})
 					}
 				}
 			}
