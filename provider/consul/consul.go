@@ -41,7 +41,7 @@ func (c *Client) Get(prefix string) ([]byte, error) {
 	})
 
 	if err != nil {
-		log.Printf("Error during Vault Get - %s", err)
+		log.Printf("Error during Consul Get - %s", err)
 		return []byte{}, err
 	}
 

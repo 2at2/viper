@@ -98,12 +98,26 @@ func toSearchableMap(source map[string]interface{}) {
 			l := len(parts)
 
 			for i, p := range parts {
+				if len(p) == 0 {
+					continue
+				}
+
 				last := l == i+1
 
 				referencedMap := searchableMap
 
+				fail := false
 				for y := 0; y != i; y++ {
-					referencedMap = referencedMap[parts[y]].(map[string]interface{})
+					switch referencedMap[parts[y]].(type) {
+					case map[string]interface{}:
+						referencedMap = referencedMap[parts[y]].(map[string]interface{})
+					default:
+						fail = true
+					}
+				}
+
+				if fail {
+					continue
 				}
 
 				if _, ok := referencedMap[p]; ok {
