@@ -1,8 +1,11 @@
 package vault
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/mitchellh/mapstructure"
+	"github.com/sirupsen/logrus"
 	"log"
 	"os"
 	"time"
@@ -11,6 +14,8 @@ import (
 
 	vaultapi "github.com/hashicorp/vault/api"
 )
+
+var logger = logrus.New()
 
 type Client struct {
 	client *vaultapi.Client
@@ -33,18 +38,43 @@ func New(machines []string) (*Client, error) {
 	}
 
 	if len(vaultRoleId) > 0 {
+		logger.Debugf("App role authentication")
+
 		if err := loginAppRole(client, vaultRoleId, vaultSecretId); err != nil {
 			return nil, err
 		}
 
-		watcher, err := client.NewLifetimeWatcher(&vaultapi.LifetimeWatcherInput{
-			Secret: &vaultapi.Secret{},
+		secret, err := client.Auth().Token().LookupSelf()
+		if err != nil {
+			return nil, err
+		}
+
+		var token struct {
+			Renewable bool
+			TTL       int
+		}
+		if err := mapstructure.Decode(secret.Data, &token); err != nil {
+			return nil, err
+		}
+
+		lifetimeWatcher, err := client.NewLifetimeWatcher(&vaultapi.LifetimeWatcherInput{
+			Secret: &vaultapi.Secret{
+				Auth: &vaultapi.SecretAuth{
+					ClientToken:   client.Token(),
+					Renewable:     token.Renewable,
+					LeaseDuration: secret.LeaseDuration,
+				},
+			},
+			Increment:     token.TTL,
+			RenewBehavior: vaultapi.RenewBehaviorIgnoreErrors,
 		})
 		if err != nil {
 			return nil, err
 		}
-		go watcher.Start()
+
+		go renewToken(context.Background(), lifetimeWatcher)
 	} else if len(vaultToken) > 0 {
+		logger.Debugf("Token auth mode")
 		client.SetToken(vaultToken)
 	} else {
 		return nil, fmt.Errorf("unknown auth method")
@@ -77,9 +107,7 @@ func (c *Client) Get(key string) ([]byte, error) {
 }
 
 func (c *Client) List(key string) (backend.KVPairs, error) {
-	// TODO: NOT IMPLEMENTED
-	//pairs, err := c.client.Logical().List(key)
-	return nil, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (c *Client) Set(key string, value []byte) error {
@@ -134,4 +162,27 @@ func loginAppRole(client *vaultapi.Client, role string, secret string) error {
 	client.SetToken(token)
 
 	return nil
+}
+
+func renewToken(ctx context.Context, watcher *vaultapi.LifetimeWatcher) {
+	go watcher.Start()
+	defer watcher.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+
+		case err := <-watcher.DoneCh():
+			if err != nil {
+				logger.Errorf("Error renewing token for Vault provider - %s", err)
+			}
+
+			// Watcher routine has finished, so start it again.
+			go watcher.Start()
+
+		case <-watcher.RenewCh():
+			logger.Debug("Successfully renewed token for Vault provider")
+		}
+	}
 }

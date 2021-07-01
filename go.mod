@@ -23,6 +23,7 @@ require (
 	github.com/magiconair/properties v1.8.1
 	github.com/mitchellh/mapstructure v1.3.3
 	github.com/pelletier/go-toml v1.2.0
+	github.com/sirupsen/logrus v1.4.2
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/soheilhy/cmux v0.1.4 // indirect
